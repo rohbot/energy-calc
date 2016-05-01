@@ -58,6 +58,12 @@ def index():
 
     return render_template('index.html',namespace=ADC_NAMESPACE)
 
+@app.route('/blink')
+def blink():
+    sr.blink(1)
+    return "watch me blink"
+
+
 
 @socketio.on('connect', namespace=ADC_NAMESPACE)
 def sio_connect():
