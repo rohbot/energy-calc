@@ -101,8 +101,8 @@
         });
 
         //receive details from server
-        socket.on('newnumber', function(msg) {
-            //console.log("Received number " + msg.x + " " + msg.y);
+        socket.on('newData', function(msg) {
+            console.log("Received number " + msg.x + " " + msg.y);
             //maintain a list of ten numbers
             //if (numbers_received.length >= 10){
             //    numbers_received.shift()

@@ -10,9 +10,10 @@ from flask.ext.socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
 from time import sleep
 from threading import Thread, Event
-#import Adafruit_ADS1x15
 import switchreader
 import randompusher
+import redislistener
+from cyrusbus import Bus
 
 ADC_NAMESPACE = '/adc'
 
@@ -22,22 +23,49 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a34db408c9c0efd21fc0dd1a0901a9e8'
 app.config['DEBUG'] = True
 
+bus = Bus()
 #turn the flask app into a socketio app
 socketio = SocketIO(app)
-sr = switchreader.SwitchReader()
+
+
+sr = switchreader.SwitchReader(bus=bus)
 switch_thread = None
 
-rp = randompusher.RandomPusher()
+rp = randompusher.RandomPusher(bus)
 pusher_thread = None
+
+rl = redislistener.RedisListener(bus)
+redis_thread = None
 
 
 def buttonPressed(bus,value):
 	print 'buttonPressed', value
 	socketio.emit('button', value, namespace=ADC_NAMESPACE)
 
-def newData(bus,value):
+def randomData(bus,value):
 	print 'incoming data', value
-	socketio.emit('newnumber', value, namespace=ADC_NAMESPACE)
+	socketio.emit('newData', value, namespace=RANDOM_NAMESPACE)
+
+def adcData(bus,value):
+    print 'incoming data', value
+    socketio.emit('newData', value, namespace=ADC_NAMESPACE)
+
+def blinkData(bus,value):
+    print 'Blink LED'
+    sr.blink(1)
+
+    
+
+def redisFeed(bus,value):
+    
+    try:
+        tags = value.split()
+        bus.publish(tags[0], tags[1:])
+        print 'redis data', value
+    except:
+        print 'bad tag', value
+
+
 
 
 @app.route('/')
@@ -48,13 +76,15 @@ def index():
         switch_thread = Thread(target=sr.run)
         switch_thread.start()
         sr.bus.subscribe(switchreader.BUTTON_EVENT,buttonPressed)
-    
-    global pusher_thread
-    if pusher_thread is None:
-        pusher_thread = Thread(target=rp.run)
-        pusher_thread.start()
-        rp.bus.subscribe(randompusher.RANDOM_EVENT,newData)
+        sr.bus.subscribe('blink', blinkData)
 
+
+    global redis_thread
+    if redis_thread is None:
+        redis_thread = Thread(target=rl.run)
+        redis_thread.start()
+        rl.bus.subscribe(redislistener.REDIS_EVENT,redisFeed)
+    
 
     return render_template('index.html',namespace=ADC_NAMESPACE)
 
@@ -62,6 +92,16 @@ def index():
 def blink():
     sr.blink(1)
     return "watch me blink"
+
+@app.route('/random')
+def randomfeed():
+    global pusher_thread
+    if pusher_thread is None:
+        pusher_thread = Thread(target=rp.run)
+        pusher_thread.start()
+        rp.bus.subscribe(randompusher.RANDOM_EVENT,randomData)
+
+    return render_template('index.html',namespace=RANDOM_NAMESPACE)
 
 
 

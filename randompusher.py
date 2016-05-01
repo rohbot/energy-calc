@@ -27,7 +27,7 @@ class RandomPusher(BusClient):
             if self.v2 < 0:
                 self.v2 = 0 
             #if prev != v2:
-            print 'reading', self.v2
+            #print 'reading', self.v2
             self.bus.publish(RANDOM_EVENT, {'y': round(self.v2,2), 'x':self.count})
             #socketio.emit('newnumber', {'y': self.v2, 'x':self.count}, namespace='/blender')
             self.count += 1
