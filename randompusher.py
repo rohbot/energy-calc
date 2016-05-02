@@ -1,18 +1,17 @@
-from time import sleep
-from cyrusbus import Bus
+from time import sleep, time
 from busclient import BusClient
 from random import random
 
-RANDOM_EVENT = 'random'
+RANDOM_EVENT = 'adc'
 
 
 
 class RandomPusher(BusClient):
-    def __init__(self,bus=Bus()):
+    def __init__(self, delay = 0.1, bus=None,):
         BusClient.__init__(self,bus)
-        self.delay = 1
+        self.delay = delay
         self.count = 0
-        self.v2 = round(random() * 15,2) 
+        self.v2 = round(random() * 2,2) 
 
     def randomNumberGenerator(self):
         """
@@ -22,13 +21,16 @@ class RandomPusher(BusClient):
         #infinite loop of magical random numbers
         print "Making random numbers"
         prev = 0
+        voltage = 2
         while self.running:
             self.v2 += random() * -10 + 5
             if self.v2 < 0:
                 self.v2 = 0 
             #if prev != v2:
             #print 'reading', self.v2
-            self.bus.publish(RANDOM_EVENT, {'y': round(self.v2,2), 'x':self.count})
+            self.bus.publish(RANDOM_EVENT,{'current': round(self.v2,2), 'voltage': voltage , 'time': time() })
+
+            #self.bus.publish(RANDOM_EVENT, {'current': round(self.v2,2), '':self.count})
             #socketio.emit('newnumber', {'y': self.v2, 'x':self.count}, namespace='/blender')
             self.count += 1
             sleep(self.delay)

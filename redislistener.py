@@ -1,5 +1,4 @@
 from time import sleep
-from cyrusbus import Bus
 from busclient import BusClient
 import redis
 
@@ -8,7 +7,7 @@ REDIS_CHANNEL = 'socketio'
 
 
 class RedisListener(BusClient):
-    def __init__(self,bus=Bus()):
+    def __init__(self,bus=None):
         BusClient.__init__(self,bus)
         self.redis = redis.Redis()
         self.pubsub = self.redis.pubsub()

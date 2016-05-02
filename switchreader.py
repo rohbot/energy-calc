@@ -1,13 +1,12 @@
 import RPi.GPIO as GPIO
 import time
-from cyrusbus import Bus
 from busclient import BusClient
 
 BUTTON_EVENT = 'button'
 
 class SwitchReader(BusClient):
 
-    def __init__(self,LED_PIN = 13, SWITCH_PIN = 11, bus=Bus()):
+    def __init__(self,LED_PIN = 13, SWITCH_PIN = 11, bus=None):
 
         BusClient.__init__(self,bus)
         self.LED_PIN = LED_PIN

@@ -7,7 +7,10 @@ KILL_EVENT = 'event.kill'
 class BusClient():
 
 	def __init__(self, bus = Bus()):
-		self.bus = bus
+		if bus is None:
+			self.bus = Bus()
+		else:
+			self.bus = bus
 		self.bus.subscribe(KILL_EVENT, self.kill)
 		self.running = False
 		

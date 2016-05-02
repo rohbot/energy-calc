@@ -24,7 +24,7 @@
       </div>
       <div class="app-content">
         <div class="app-section">
-          <div class="app-button">Press Red Button to Start</div>
+          <div class="app-button" data-target="timer-page" >Press Red Button to Start</div>
         </div>
       </div>
     </div>
@@ -59,7 +59,14 @@
         <div class="app-title">Results</div>
       </div>
       <div class="app-content">
-        <div id="results"></div>
+        <div id="results">
+          <div id="results-total"></div>
+          That's equivalent to:
+          <div id="results-phone"></div>
+          <div id="results-laptop"></div>
+
+
+        </div>
         <div class="app-button" data-target="home">Return to Start</div>
       </div>
     </div>
@@ -71,12 +78,15 @@
     <script src="static/js/canvasjs.min.js"></script>
 
     <script>
-      var dps = [[0,0]];
+      var dps = [{x:0, y:0}];
       var graphing = false;
       var chart;
       var counter;
       var energy = 0.0;
       var atHome = false;
+      var startGraphTime = 0;
+      var lastTime = 0;
+      var runTime = 60;
 
       App.controller('home', function (page) {
 
@@ -86,14 +96,14 @@
         var socket = io.connect('http://' + document.domain + ':8080{{ namespace }}');
         
                
-        counter = 0;
+        counter = 1;
 
         socket.on('button', function(msg) {
           if(atHome){
-            dps = [[0,0]];
+            dps = [{x:0, y:0}];
             graphing = false;
 
-            counter = 0;
+            startGraphTime = 0;
             atHome = false;
             App.load('timer-page');  
           }
@@ -102,19 +112,27 @@
 
         //receive details from server
         socket.on('newData', function(msg) {
-            console.log("Received number " + msg.x + " " + msg.y);
+            //console.log("Received number " + msg.current + " " + msg.voltage );
             //maintain a list of ten numbers
             //if (numbers_received.length >= 10){
             //    numbers_received.shift()
             //} 
             if(graphing){
+                if(startGraphTime == 0){
+                  startGraphTime = msg.time;
+                  lastTime = msg.time;
+                }
 
-                dps.push({x:counter, y:msg.y});
-                energy += msg.y;
+                var power = msg.current * msg.voltage;
+                var time = msg.time - startGraphTime
+                var dt = msg.time - lastTime;
+                lastTime = msg.time
+                dps.push({x:time, y:power});
+                energy += power * dt;
                 //chart.options.title.text = 'Energy Generated - ' + Math.round(energy) + 'J';
                 chart.render(); 
-               $('#log').html(msg.y);
-               console.log("Received number " + msg.y + " total: " + energy );
+               $('#log').html(msg.y); 
+               console.log("Power:  " + power + " total: " + energy + " count: " + time + " dt:" + dt );
                counter++;
              
 
@@ -172,23 +190,24 @@
           },
 
           style : {
-          }
+          },
+            zoomEnabled: true
           });
-
+          //dps = [{x:0, y:0}];
+            
           chart.render();
           graphing = true;
-          var ride_length = 60;
           var interval = setInterval(function() {
             count++;
-            if (count > ride_length ){
-            graphing = false;
-            clearInterval(interval);
-            //alert()
-            App.load('results-page');
-           
+            if (count >= runTime ){
+              graphing = false;
+              clearInterval(interval);
+              //alert()
+              App.load('results-page');
+             
 
           }else
-            $('#time-left').text('Time remaining: '+ (ride_length - count) + 's');
+            $('#time-left').text('Time remaining: '+ (runTime - count) + 's');
 
 
           }, 1000);
@@ -201,12 +220,15 @@
       
       App.controller('results-page', function (page) {
           $(page).on('appShow', function () {
-            $('#results').text('Congratulations, you generated ' + Math.round(energy) + ' joules');
+            $('#results-total').html("Congratulations you generated " + Math.round(energy) + " joules") ;
+            $('#results-phone').html("Charging your phone for " + Math.round(energy / 5 / 60,1) + " min") ;
+            $('#results-laptop').html("Charging your laptop for " + Math.round(energy / 65 / 60 ) + " min") ;
+            
           }); 
         });  
 
-
-    /*  try {
+/*
+      try {
         App.restore();
       } catch (err) {
         App.load('home');

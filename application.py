@@ -11,9 +11,11 @@ from flask import Flask, render_template, url_for, copy_current_request_context
 from time import sleep
 from threading import Thread, Event
 import switchreader
-import randompusher
 import redislistener
+import randompusher
+import adcreader
 from cyrusbus import Bus
+import time
 
 ADC_NAMESPACE = '/adc'
 
@@ -31,41 +33,36 @@ socketio = SocketIO(app)
 sr = switchreader.SwitchReader(bus=bus)
 switch_thread = None
 
-rp = randompusher.RandomPusher(bus)
-pusher_thread = None
-
-rl = redislistener.RedisListener(bus)
+rl = redislistener.RedisListener(bus=bus)
 redis_thread = None
+
+#ar = adcreader.ADCReader(bus=bus)
+ar = randompusher.RandomPusher(bus=bus)
+adc_thread = None
+
 
 
 def buttonPressed(bus,value):
 	print 'buttonPressed', value
 	socketio.emit('button', value, namespace=ADC_NAMESPACE)
 
-def randomData(bus,value):
-	print 'incoming data', value
-	socketio.emit('newData', value, namespace=RANDOM_NAMESPACE)
 
 def adcData(bus,value):
-    print 'incoming data', value
+    print time.time(), 'adc:', value
     socketio.emit('newData', value, namespace=ADC_NAMESPACE)
 
 def blinkData(bus,value):
     print 'Blink LED'
     sr.blink(1)
 
-    
 
 def redisFeed(bus,value):
-    
     try:
         tags = value.split()
         bus.publish(tags[0], tags[1:])
         print 'redis data', value
     except:
         print 'bad tag', value
-
-
 
 
 @app.route('/')
@@ -84,6 +81,12 @@ def index():
         redis_thread = Thread(target=rl.run)
         redis_thread.start()
         rl.bus.subscribe(redislistener.REDIS_EVENT,redisFeed)
+
+    global adc_thread
+    if adc_thread is None:
+        adc_thread = Thread(target=ar.run)
+        adc_thread.start()
+        ar.bus.subscribe(adcreader.ADC_EVENT,adcData)
     
 
     return render_template('index.html',namespace=ADC_NAMESPACE)
@@ -93,15 +96,15 @@ def blink():
     sr.blink(1)
     return "watch me blink"
 
-@app.route('/random')
-def randomfeed():
-    global pusher_thread
-    if pusher_thread is None:
-        pusher_thread = Thread(target=rp.run)
-        pusher_thread.start()
-        rp.bus.subscribe(randompusher.RANDOM_EVENT,randomData)
+# @app.route('/random')
+# def randomfeed():
+#     global pusher_thread
+#     if pusher_thread is None:
+#         pusher_thread = Thread(target=rp.run)
+#         pusher_thread.start()
+#         rp.bus.subscribe(randompusher.RANDOM_EVENT,randomData)
 
-    return render_template('index.html',namespace=RANDOM_NAMESPACE)
+#     return render_template('index.html',namespace=RANDOM_NAMESPACE)
 
 
 
