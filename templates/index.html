@@ -14,16 +14,26 @@
             font-size: 30px;
             
         }
+          .welcome-text{
+
+            text-align: center;
+          }
+
+          .results-text{
+            font-size: 14px;
+          }
+
     </style>
   </head>
 
   <body>
     <div class="app-page" data-page="home">
       <div class="app-topbar">
-        <div class="app-title">Energy Calculator</div>
+        <div class="app-title">Bicycle Blender Challenge</div>
       </div>
       <div class="app-content">
         <div class="app-section">
+          <div class="welcome-text">Welcome to the Bicycle Blender Challenge</div>
           <div class="app-button" data-target="timer-page" >Press Red Button to Start</div>
         </div>
       </div>
@@ -61,10 +71,11 @@
       <div class="app-content">
         <div id="results">
           <div id="results-total"></div>
+          <div class="results-text">
           That's equivalent to:
-          <div id="results-phone"></div>
-          <div id="results-laptop"></div>
-
+            <div id="results-phone"></div>
+            <div id="results-laptop"></div>
+          </div>
 
         </div>
         <div class="app-button" data-target="home">Return to Start</div>
@@ -220,9 +231,9 @@
       
       App.controller('results-page', function (page) {
           $(page).on('appShow', function () {
-            $('#results-total').html("Congratulations you generated " + Math.round(energy) + " joules") ;
+            $('#results-total').html("Well Done! <br/>You generated " + Math.round(energy) + " joules") ;
             $('#results-phone').html("Charging your phone for " + Math.round(energy / 5 / 60,1) + " min") ;
-            $('#results-laptop').html("Charging your laptop for " + Math.round(energy / 65 / 60 ) + " min") ;
+            $('#results-laptop').html("Powering your laptop for " + Math.round(energy / 65 / 60 ) + " min") ;
             
           }); 
         });  
