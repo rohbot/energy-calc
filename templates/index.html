@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Energy Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <link rel="stylesheet" href="static/css/app.min.css">
+    <style>
+            #timer {
+            color : red;
+            font-size: 100px;
+            text-align: center;
+        }
+            #time-left {
+            font-size: 30px;
+            
+        }
+    </style>
+  </head>
+
+  <body>
+    <div class="app-page" data-page="home">
+      <div class="app-topbar">
+        <div class="app-title">Energy Calculator</div>
+      </div>
+      <div class="app-content">
+        <div class="app-section">
+          <div class="app-button">Press Red Button to Start</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-page" data-page="timer-page">
+      <div class="app-topbar">
+        <!-- <div class="app-button left" data-back data-autotitle></div> -->
+        <div class="app-title">Get Ready</div>
+      </div>
+      <div class="app-content">
+        <div id="timer">5</div>
+      </div>
+    </div>
+
+     <div class="app-page" data-page="graph-page">
+      <div class="app-topbar">
+        <!-- <div class="app-button left" data-target="home" data-autotitle></div> -->
+        <div class="app-title">Power Generated</div>
+      </div>
+      <div class="app-content">
+        <div id="time-left"></div>
+ 
+        <div id="chartContainer"></div>
+ 
+      </div>
+    </div>
+
+
+    <div class="app-page" data-page="results-page">
+      <div class="app-topbar">
+        <!-- <div class="app-button left" data-back data-autotitle></div> -->
+        <div class="app-title">Results</div>
+      </div>
+      <div class="app-content">
+        <div id="results"></div>
+        <div class="app-button" data-target="home">Return to Start</div>
+      </div>
+    </div>
+
+
+    <script src="static/js/zepto.js"></script>
+    <script src="static/js/app.min.js"></script>
+    <script src="static/js/socket.io.min.js"></script>
+    <script src="static/js/canvasjs.min.js"></script>
+
+    <script>
+      var dps = [[0,0]];
+      var graphing = false;
+      var chart;
+      var counter;
+      var energy = 0.0;
+      var atHome = false;
+
+      App.controller('home', function (page) {
+
+        atHome = true;
+        //connect to the socket server.
+        //var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
+        var socket = io.connect('http://' + document.domain + ':8080{{ namespace }}');
+        
+               
+        counter = 0;
+
+        socket.on('button', function(msg) {
+          if(atHome){
+            dps = [[0,0]];
+            graphing = false;
+
+            counter = 0;
+            atHome = false;
+            App.load('timer-page');  
+          }
+          
+        });
+
+        //receive details from server
+        socket.on('newnumber', function(msg) {
+            //console.log("Received number " + msg.x + " " + msg.y);
+            //maintain a list of ten numbers
+            //if (numbers_received.length >= 10){
+            //    numbers_received.shift()
+            //} 
+            if(graphing){
+
+                dps.push({x:counter, y:msg.y});
+                energy += msg.y;
+                //chart.options.title.text = 'Energy Generated - ' + Math.round(energy) + 'J';
+                chart.render(); 
+               $('#log').html(msg.y);
+               console.log("Received number " + msg.y + " total: " + energy );
+               counter++;
+             
+
+            }           
+                  //        $('#log').html(numbers_string);
+      
+        });
+
+
+      });
+
+      App.controller('timer-page', function (page) {
+        var counter = 5;
+        graphing = false;
+        var interval = setInterval(function() {
+          counter--;
+
+          // Display 'counter' wherever you want to display it.
+          if (counter == 0) {
+              // Display a login box
+              clearInterval(interval);
+              $('#timer').text('Go!');
+              App.load('graph-page');
+              //loadChart();
+          
+          }
+          else{
+               $('#timer').text(counter);
+          }
+        }, 1000);
+        
+      });
+
+
+      App.controller('graph-page', function (page) {
+        var count = 0;
+          
+        $(page).on('appShow', function () {
+          chart = new CanvasJS.Chart("chartContainer", {
+          data: [
+              {
+                type: "line",
+                dataPoints: dps
+              }
+          ],
+          title: {
+           //   text: "Power Generated"
+          },
+          axisX:{ 
+              title: "Time (s)",
+          },
+
+          axisY:{ 
+              title: "Power (W)",
+          },
+
+          style : {
+          }
+          });
+
+          chart.render();
+          graphing = true;
+          var ride_length = 60;
+          var interval = setInterval(function() {
+            count++;
+            if (count > ride_length ){
+            graphing = false;
+            clearInterval(interval);
+            //alert()
+            App.load('results-page');
+           
+
+          }else
+            $('#time-left').text('Time remaining: '+ (ride_length - count) + 's');
+
+
+          }, 1000);
+
+
+        });
+
+        
+      });
+      
+      App.controller('results-page', function (page) {
+          $(page).on('appShow', function () {
+            $('#results').text('Congratulations, you generated ' + Math.round(energy) + ' joules');
+          }); 
+        });  
+
+
+    /*  try {
+        App.restore();
+      } catch (err) {
+        App.load('home');
+      }
+*/
+          App.load('home');
+    
+
+    </script>
+  </body>
+  <footer>
+    <div id="time-left"></div>
+  </footer>
+</html>
