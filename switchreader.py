@@ -1,4 +1,4 @@
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import time
 from cyrusbus import Bus
 from busclient import BusClient
@@ -13,15 +13,14 @@ class SwitchReader(BusClient):
         self.LED_PIN = LED_PIN
         self.SWITCH_PIN = SWITCH_PIN
 
-        # GPIO.setmode(GPIO.BOARD)
-        # GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
 
-        # GPIO.setup(self.SWITCH_PIN,GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        # GPIO.setup(self.LED_PIN, GPIO.OUT)  
+        GPIO.setup(self.SWITCH_PIN,GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.LED_PIN, GPIO.OUT)  
         self.count = 0
         self.lastPressed = time.time()
         
-        #super(SwitchThread, self, bus).__init__()
         
     def blink(self,delay):
         GPIO.output(self.LED_PIN,GPIO.HIGH)  
@@ -34,16 +33,13 @@ class SwitchReader(BusClient):
         self.running = True
         for i in range(3):
             print 'blink'
-            #self.blink(0.5)
+            self.blink(0.5)
 
         while self.running:
-            #if True == False: # or GPIO.input(self.SWITCH_PIN) == False and not pressed and 
-            if time.time() - self.lastPressed > 2:
-                #GPIO.output(self.LED_PIN,GPIO.HIGH)
+            if GPIO.input(self.SWITCH_PIN) == False and time.time() - self.lastPressed > 1:
+                GPIO.output(self.LED_PIN,GPIO.HIGH)
                 self.count += 1  
-                #socketio.emit('button', self.count, namespace='/blender')
                 self.bus.publish(BUTTON_EVENT, self.count) 
-                #redis.publish('button', '1')
                 pressed = True
                 self.lastPressed = time.time()
                 #print time.time(), 'ON' , self.count
@@ -53,7 +49,7 @@ class SwitchReader(BusClient):
 
             else:
                 pressed = False
-                #GPIO.output(self.LED_PIN,GPIO.LOW)  
+                GPIO.output(self.LED_PIN,GPIO.LOW)  
 
             
             time.sleep(0.1)

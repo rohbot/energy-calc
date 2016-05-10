@@ -14,7 +14,9 @@ from threading import Thread, Event
 import switchreader
 import randompusher
 
-SIO_NAMESPACE = '/blender'
+ADC_NAMESPACE = '/adc'
+
+RANDOM_NAMESPACE = '/random'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a34db408c9c0efd21fc0dd1a0901a9e8'
@@ -31,11 +33,11 @@ pusher_thread = None
 
 def buttonPressed(bus,value):
 	print 'buttonPressed', value
-	socketio.emit('button', value, namespace=SIO_NAMESPACE)
+	socketio.emit('button', value, namespace=ADC_NAMESPACE)
 
 def newData(bus,value):
 	print 'incoming data', value
-	socketio.emit('newnumber', value, namespace=SIO_NAMESPACE)
+	socketio.emit('newnumber', value, namespace=ADC_NAMESPACE)
 
 
 @app.route('/')
@@ -54,17 +56,17 @@ def index():
         rp.bus.subscribe(randompusher.RANDOM_EVENT,newData)
 
 
-    return render_template('index.html',namespace=SIO_NAMESPACE)
+    return render_template('index.html',namespace=ADC_NAMESPACE)
 
 
-@socketio.on('connect', namespace=SIO_NAMESPACE)
+@socketio.on('connect', namespace=ADC_NAMESPACE)
 def sio_connect():
     # need visibility of the global thread object
     print('Client connected')
 
     #Start the random number generator thread only if the thread has not been started before.
 
-@socketio.on('disconnect', namespace=SIO_NAMESPACE)
+@socketio.on('disconnect', namespace=ADC_NAMESPACE)
 def sio_disconnect():
     print('Client disconnected')
 
