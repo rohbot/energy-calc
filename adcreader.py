@@ -14,6 +14,10 @@ class ADCReader(BusClient):
     	self.setGain(gain)
     	self.shuntValue = shuntValue
     	self.opampGain = opampGain
+        self.current_list = []
+        self.previous_time = time()
+        self.voltage_list=[]
+
     	
     def setGain(self,gain):
     	if gain == 2/3:
@@ -37,13 +41,46 @@ class ADCReader(BusClient):
 
              
     def run(self):
-		self.running = True
-		while self.running:
-			voltage = 1	
-			#current = (self.adc.read_adc(0, gain=self.gain) * self.multiplier) / self.opampGain / self.shuntValue
-			current = self.adc.read_adc_difference(0, gain=self.gain)
-			self.bus.publish(ADC_EVENT,{'current': round(current,3), 'voltage': voltage , 'time': time() })
-			sleep(self.delay)
+        self.running = True
+        while self.running:
+            current_reading = (self.adc.read_adc(2,gain=1,data_rate=128)*0.000125)/10/0.01
+            voltage_reading = (self.adc.read_adc(3,gain=1,data_rate=128)*0.000125)/10
+
+            current_time = time()
+
+            #    print current_time - previous_time
+            if current_time - self.previous_time > 0.0001:
+                self.previous_time = current_time
+
+
+            if len(self.current_list) < 40:
+                self.current_list.append(current_reading)
+
+            # print current_list 
+            else:
+                averaged_current = sum(self.current_list)/40
+
+                # print round(averaged_current,3)
+                self.current_list = []
+                self.current_list.insert(0,round(averaged_current,1))
+
+
+
+
+            if len(self.voltage_list) < 40:
+                self.voltage_list.append(voltage_reading)
+
+            # print current_list
+            else:
+                averaged_voltage = sum(self.voltage_list)/40
+
+            #print round(averaged_voltage*100,1),round(averaged_current,1)
+                self.bus.publish(ADC_EVENT,{'current': round(averaged_current,1), 'voltage': round(averaged_voltage*100,1) , 'time': time() })
+                self.voltage_list = []
+                self.voltage_list.insert(0,round(averaged_voltage,1))
+
+			
+			#sleep(self.delay)
 
 
 if __name__ == '__main__':

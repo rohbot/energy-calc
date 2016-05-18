@@ -36,8 +36,8 @@ switch_thread = None
 rl = redislistener.RedisListener(bus=bus)
 redis_thread = None
 
-#ar = adcreader.ADCReader(bus=bus)
-ar = randompusher.RandomPusher(bus=bus)
+ar = adcreader.ADCReader(bus=bus)
+#ar = randompusher.RandomPusher(bus=bus)
 adc_thread = None
 
 
@@ -48,12 +48,12 @@ def buttonPressed(bus,value):
 
 
 def adcData(bus,value):
-    print time.time(), 'adc:', value
+    #print time.time(), 'adc:', value
     socketio.emit('newData', value, namespace=ADC_NAMESPACE)
 
 def blinkData(bus,value):
     print 'Blink LED'
-    sr.blink(1)
+    sr.blink(0.5)
 
 
 def redisFeed(bus,value):

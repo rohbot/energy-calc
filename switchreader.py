@@ -22,10 +22,13 @@ class SwitchReader(BusClient):
         
         
     def blink(self,delay):
-        GPIO.output(self.LED_PIN,GPIO.HIGH)  
-        time.sleep(delay)
-        GPIO.output(self.LED_PIN,GPIO.LOW)  
-        time.sleep(delay)
+        self.blinking = 1
+        self.blinkCounter = delay *  10  
+                
+        #GPIO.output(self.LED_PIN,GPIO.HIGH)  
+        #time.sleep(delay)
+        #GPIO.output(self.LED_PIN,GPIO.LOW)  
+        #time.sleep(delay)
 
     
     def run(self):
@@ -48,7 +51,18 @@ class SwitchReader(BusClient):
 
             else:
                 pressed = False
-                GPIO.output(self.LED_PIN,GPIO.LOW)  
+                GPIO.output(self.LED_PIN,GPIO.LOW)
+
+            if self.blinking == 1:
+                print 'Blink'
+                GPIO.output(self.LED_PIN,GPIO.HIGH)
+                self.blinkCounter -= 1
+                if self.blinkCounter < 1:
+                    self.blinking = 0
+                    GPIO.output(self.LED_PIN,GPIO.LOW)
+                    print 'blink off'
+
+
 
             
             time.sleep(0.1)
