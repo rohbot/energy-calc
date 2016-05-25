@@ -34,7 +34,7 @@
       <div class="app-content">
         <div class="app-section">
           <div class="welcome-text">Welcome to the Bicycle Blender Challenge</div>
-          <div class="app-button" data-target="timer-page" >Press Red Button to Start</div>
+          <div class="app-button" data-target="timer-page" >Press to Start</div>
         </div>
       </div>
     </div>
@@ -158,6 +158,12 @@
       });
 
       App.controller('timer-page', function (page) {
+
+        dps = [{x:0, y:0}];
+        graphing = false;
+
+        startGraphTime = 0;
+
         var counter = 5;
         graphing = false;
         var interval = setInterval(function() {

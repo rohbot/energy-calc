@@ -25,15 +25,15 @@ class SwitchReader(BusClient):
         self.blinking = 1
         self.blinkCounter = delay *  10  
                 
-        #GPIO.output(self.LED_PIN,GPIO.HIGH)  
-        #time.sleep(delay)
-        #GPIO.output(self.LED_PIN,GPIO.LOW)  
-        #time.sleep(delay)
+        GPIO.output(self.LED_PIN,GPIO.HIGH)  
+        time.sleep(delay)
+        GPIO.output(self.LED_PIN,GPIO.LOW)  
+        time.sleep(delay)
 
     
     def run(self):
         self.running = True
-        for i in range(3):
+        for i in range(2):
             print 'blink'
             self.blink(0.5)
 

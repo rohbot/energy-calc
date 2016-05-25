@@ -17,6 +17,7 @@ class ADCReader(BusClient):
         self.current_list = []
         self.previous_time = time()
         self.voltage_list=[]
+        self.window_size = 25
 
     	
     def setGain(self,gain):
@@ -53,12 +54,12 @@ class ADCReader(BusClient):
                 self.previous_time = current_time
 
 
-            if len(self.current_list) < 40:
+            if len(self.current_list) < self.window_size:
                 self.current_list.append(current_reading)
 
             # print current_list 
             else:
-                averaged_current = sum(self.current_list)/40
+                averaged_current = sum(self.current_list)/ self.window_size
 
                 # print round(averaged_current,3)
                 self.current_list = []
@@ -67,12 +68,12 @@ class ADCReader(BusClient):
 
 
 
-            if len(self.voltage_list) < 40:
+            if len(self.voltage_list) < self.window_size:
                 self.voltage_list.append(voltage_reading)
 
             # print current_list
             else:
-                averaged_voltage = sum(self.voltage_list)/40
+                averaged_voltage = sum(self.voltage_list)/ self.window_size
 
             #print round(averaged_voltage*100,1),round(averaged_current,1)
                 self.bus.publish(ADC_EVENT,{'current': round(averaged_current,1), 'voltage': round(averaged_voltage*100,1) , 'time': time() })
